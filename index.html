@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NRL Predictor Pro v1.2</title>
+    <style>
+        :root { --primary: #1d3557; --accent: #e63946; --light: #f1faee; --secondary: #457b9d; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--light); padding: 15px; color: var(--primary); line-height: 1.4; }
+        .card { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        h2 { margin: 0 0 10px 0; font-size: 1.1rem; border-bottom: 2px solid var(--accent); display: inline-block; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        label { font-size: 0.8rem; font-weight: bold; display: block; margin-top: 8px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; margin-top: 4px; font-size: 1rem; }
+        .weather-box { background: #a8dadc; padding: 12px; border-radius: 10px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; font-weight: bold; }
+        button { width: 100%; padding: 16px; background: var(--accent); color: white; border: none; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 0 #b92e3a; }
+        button:active { transform: translateY(2px); box-shadow: 0 2px 0 #b92e3a; }
+        #resultBox { display: none; margin-top: 20px; background: var(--primary); color: white; padding: 20px; border-radius: 15px; text-align: center; }
+        .margin-big { font-size: 2.2rem; display: block; color: #a8dadc; margin: 10px 0; font-weight: bold; }
+        .stats-row { display: flex; justify-content: space-around; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; }
+        .stat-item { flex: 1; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; display: block; }
+        .stat-label { font-size: 0.7rem; text-transform: uppercase; opacity: 0.8; }
+    </style>
+</head>
+<body>
+
+    <h1 style="text-align:center; font-size: 1.6rem; margin-bottom: 5px;">🏉 NRL Predictor Pro</h1>
+    <p style="text-align:center; font-size: 0.8rem; margin-bottom: 20px; opacity: 0.7;">Vibrational Analysis & Statistical Modeling</p>
+
+    <div class="weather-box">
+        <span>🌧️ Weather Mode</span>
+        <select id="weather" style="width: auto; margin: 0;">
+            <option value="1">Dry / Sunny (100%)</option>
+            <option value="0.85">Wet / Raining (85%)</option>
+        </select>
+    </div>
+
+    <div class="card">
+        <h2>Home Team</h2>
+        <input type="text" id="nameA" placeholder="Enter Team Name">
+        <div class="grid">
+            <div><label>Avg Points</label><input type="number" id="hA" value="20"></div>
+            <div><label>Comp. %</label><input type="number" id="cA" value="78"></div>
+            <div><label>Discipline</label><input type="number" id="dA" value="70"></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Away Team</h2>
+        <input type="text" id="nameB" placeholder="Enter Team Name">
+        <div class="grid">
+            <div><label>Avg Points</label><input type="number" id="hB" value="18"></div>
+            <div><label>Comp. %</label><input type="number" id="cB" value="75"></div>
+            <div><label>Discipline</label><input type="number" id="dB" value="65"></div>
+        </div>
+    </div>
+
+    <button onclick="calculate()">GENERATE PREDICTION</button>
+
+    <div id="resultBox">
+        <div style="font-size: 0.9rem;">The predicted favorite is:</div>
+        <strong id="winner" class="margin-big">---</strong>
+        
+        <div class="stats-row">
+            <div class="stat-item">
+                <span id="totalPoints" class="stat-val">--</span>
+                <span class="stat-label">Total Pts</span>
+            </div>
+            <div class="stat-item">
+                <span id="totalTries" class="stat-val">--</span>
+                <span class="stat-label">Total Tries</span>
+            </div>
+        </div>
+
+        <div class="stats-row" style="border: none; padding-top: 10px;">
+            <div class="stat-item">
+                <span id="triesA" class="stat-val" style="color: #a8dadc;">--</span>
+                <span id="labelA" class="stat-label">Team A Tries</span>
+            </div>
+            <div class="stat-item">
+                <span id="triesB" class="stat-val" style="color: #a8dadc;">--</span>
+                <span id="labelB" class="stat-label">Team B Tries</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calculate() {
+            const weather = parseFloat(document.getElementById('weather').value);
+            
+            // Collect Team Data
+            const nA = document.getElementById('nameA').value || "Home";
+            const hA = parseFloat(document.getElementById('hA').value) || 0;
+            const cA = parseFloat(document.getElementById('cA').value) || 0;
+            const dA = parseFloat(document.getElementById('dA').value) || 0;
+
+            const nB = document.getElementById('nameB').value || "Away";
+            const hB = parseFloat(document.getElementById('hB').value) || 0;
+            const cB = parseFloat(document.getElementById('cB').value) || 0;
+            const dB = parseFloat(document.getElementById('dB').value) || 0;
+
+            // Logic: Power Ranking Calculation
+            let powerA = ((hA * 0.2) + (cA * 0.3) + (dA * 0.4)) * weather + 5; // +5 Home Advantage
+            let powerB = ((hB * 0.2) + (cB * 0.3) + (dB * 0.4)) * weather;
+
+            // Prediction Calculations
+            let totalPoints = ((hA + hB) * weather).toFixed(0);
+            
+            // Try Calculation (Using a 6-point conversion average)
+            let teamATries = (powerA / 6).toFixed(1);
+            let teamBTries = (powerB / 6).toFixed(1);
+            let totalTries = (parseFloat(teamATries) + parseFloat(teamBTries)).toFixed(1);
+
+            // Update UI
+            document.getElementById('resultBox').style.display = "block";
+            const winnerName = powerA > powerB ? nA : nB;
+            const margin = Math.abs(powerA - powerB).toFixed(1);
+
+            document.getElementById('winner').innerText = `${winnerName} by ${margin}`;
+            document.getElementById('totalPoints').innerText = totalPoints;
+            document.getElementById('totalTries').innerText = totalTries;
+            
+            document.getElementById('triesA').innerText = teamATries;
+            document.getElementById('labelA').innerText = nA + " Tries";
+            
+            document.getElementById('triesB').innerText = teamBTries;
+            document.getElementById('labelB').innerText = nB + " Tries";
+            
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+    </script>
+</body>
+</html>
