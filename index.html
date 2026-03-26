@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NRL Predictor Pro v1.5</title>
+    <style>
+        :root { --primary: #1d3557; --accent: #e63946; --light: #f1faee; --gold: #fbc02d; --secondary: #457b9d; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--light); padding: 15px; color: var(--primary); }
+        .card { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        h2 { margin: 0 0 10px 0; font-size: 1.1rem; border-bottom: 2px solid var(--accent); display: inline-block; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        label { font-size: 0.8rem; font-weight: bold; display: block; margin-top: 8px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; margin-top: 4px; font-size: 1rem; }
+        .weather-box { background: #a8dadc; padding: 12px; border-radius: 10px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; font-weight: bold; }
+        button { width: 100%; padding: 16px; background: var(--accent); color: white; border: none; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        #resultBox { display: none; margin-top: 20px; background: var(--primary); color: white; padding: 20px; border-radius: 15px; text-align: center; }
+        .margin-big { font-size: 2.2rem; display: block; color: #a8dadc; margin: 10px 0; font-weight: bold; }
+        .ht-box { background: rgba(255,255,255,0.1); padding: 10px; border-radius: 10px; margin-bottom: 15px; border-left: 4px solid var(--gold); }
+        .stats-row { display: flex; justify-content: space-around; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; display: block; }
+        .stat-label { font-size: 0.7rem; text-transform: uppercase; opacity: 0.8; }
+        #logSection { margin-top: 30px; border-top: 2px dashed #ccc; padding-top: 20px; }
+        .log-entry { background: #fff; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem; border-left: 5px solid var(--primary); display: flex; justify-content: space-between; align-items: center; color: #333; }
+        .clear-btn { background: #ccc; color: #333; font-size: 0.7rem; padding: 5px 10px; width: auto; box-shadow: none; margin-top: 10px; }
+    </style>
+</head>
+<body onload="loadHistory()">
+
+    <h1 style="text-align:center; font-size: 1.5rem; margin-bottom: 20px;">🏉 NRL Predictor Pro</h1>
+
+    <div class="weather-box">
+        <span>🌧️ Weather Mode</span>
+        <select id="weather">
+            <option value="1">Dry / Sunny</option>
+            <option value="0.85">Wet / Raining</option>
+        </select>
+    </div>
+
+    <div class="card">
+        <h2>Home Team</h2>
+        <input type="text" id="nameA" placeholder="e.g. Broncos">
+        <div class="grid">
+            <div><label>Avg Pts</label><input type="number" id="hA" value="21.5"></div>
+            <div><label>Comp. %</label><input type="number" id="cA" value="80"></div>
+            <div><label>Discipline</label><input type="number" id="dA" value="68"></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Away Team</h2>
+        <input type="text" id="nameB" placeholder="e.g. Dolphins">
+        <div class="grid">
+            <div><label>Avg Pts</label><input type="number" id="hB" value="25.0"></div>
+            <div><label>Comp. %</label><input type="number" id="cB" value="74"></div>
+            <div><label>Discipline</label><input type="number" id="dB" value="70"></div>
+        </div>
+    </div>
+
+    <button onclick="calculate()">GENERATE PREDICTION</button>
+
+    <div id="resultBox">
+        <div style="font-size: 0.9rem;">Full-Time Favorite:</div>
+        <strong id="winner" class="margin-big">---</strong>
+
+        <div class="ht-box">
+            <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--gold);">Predicted HT Lead</div>
+            <div id="htResult" style="font-weight: bold;">---</div>
+        </div>
+        
+        <div class="stats-row">
+            <div class="stat-item"><span id="totalPoints" class="stat-val">--</span><span class="stat-label">Match Pts</span></div>
+            <div class="stat-item"><span id="totalTries" class="stat-val">--</span><span class="stat-label">Total Tries</span></div>
+        </div>
+
+        <button onclick="saveToLog()" style="background: var(--secondary); font-size: 0.9rem; padding: 10px; margin-top: 15px; width: 80%;">💾 SAVE TO LOG</button>
+    </div>
+
+    <div id="logSection">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="font-size: 1rem;">📋 Prediction History</h3>
+            <button class="clear-btn" onclick="clearHistory()">Clear History</button>
+        </div>
+        <div id="logList"></div>
+    </div>
+
+    <script>
+        let currentLogText = "";
+
+        function calculate() {
+            const w = parseFloat(document.getElementById('weather').value);
+            const nA = document.getElementById('nameA').value || "Home";
+            const hA = parseFloat(document.getElementById('hA').value) || 0;
+            const cA = parseFloat(document.getElementById('cA').value) || 0;
+            const dA = parseFloat(document.getElementById('dA').value) || 0;
+            const nB = document.getElementById('nameB').value || "Away";
+            const hB = parseFloat(document.getElementById('hB').value) || 0;
+            const cB = parseFloat(document.getElementById('cB').value) || 0;
+            const dB = parseFloat(document.getElementById('dB').value) || 0;
+
+            let pA = ((hA * 0.2) + (cA * 0.3) + (dA * 0.4)) * w + 5; 
+            let pB = ((hB * 0.2) + (cB * 0.3) + (dB * 0.4)) * w;
+
+            let pts = Math.round((hA + hB) * w);
+            let tries = (pts / 6).toFixed(1);
+            let win = pA > pB ? nA : nB;
+            let ftM = Math.abs(pA - pB).toFixed(1);
+            let htM = (ftM * 0.44).toFixed(1);
+
+            document.getElementById('resultBox').style.display = "block";
+            document.getElementById('winner').innerText = win + " by " + ftM;
+            document.getElementById('htResult').innerText = win + " by " + htM;
+            document.getElementById('totalPoints').innerText = pts;
+            document.getElementById('totalTries').innerText = tries;
+
+            currentLogText = nA + " vs " + nB + ": " + win + " by " + ftM;
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+
+        function saveToLog() {
+            if (!currentLogText) return;
+            let history = JSON.parse(localStorage.getItem('nrlHistory')) || [];
+            history.unshift(currentLogText); // Add to beginning
+            localStorage.setItem('nrlHistory', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function loadHistory() {
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('logList');
+            const history = JSON.parse(localStorage.getItem('nrlHistory')) || [];
+            list.innerHTML = "";
+            history.forEach(item => {
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                entry.innerHTML = "<span>" + item + "</span> <span>✅</span>";
+                list.appendChild(entry);
+            });
+        }
+
+        function clearHistory() {
+            if(confirm("Clear all saved predictions?")) {
+                localStorage.removeItem('nrlHistory');
+                renderHistory();
+            }
+        }
+    </script>
+</body>
+</html>
