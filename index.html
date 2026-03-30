@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NRL Predictor v1.7 - Bookie Edition</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background-color: #0e1a2b; color: #fff; padding: 10px; margin: 0; }
+        .app-container { max-width: 400px; margin: 20px auto; background: #16263d; border-radius: 15px; border: 2px solid #ffcc00; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .header { background: #ffcc00; color: #000; padding: 15px; font-weight: bold; text-align: center; text-transform: uppercase; font-size: 1.2em; }
+        .content { padding: 20px; }
+        label { font-size: 12px; color: #ffcc00; text-transform: uppercase; font-weight: bold; }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0 15px 0; border-radius: 8px; border: none; font-size: 16px; box-sizing: border-box; }
+        input { background: #0e1a2b; color: white; border: 1px solid #3d4f66; }
+        button { background: #ffcc00; color: #000; font-weight: 900; cursor: pointer; text-transform: uppercase; }
+        
+        .result-panel { background: #0e1a2b; padding: 15px; border-radius: 10px; border: 1px dashed #ffcc00; }
+        .market-row { display: flex; justify-content: space-between; border-bottom: 1px solid #1c2e4a; padding: 8px 0; font-size: 14px; }
+        .market-label { color: #8a9cb5; }
+        .market-value { color: #ffffff; font-weight: bold; }
+        .highlight { color: #ffcc00; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">NRL Predictor v1.7</div>
+    <div class="content">
+        <label>Home Team Rating</label>
+        <input type="number" id="pA" placeholder="e.g. 88.5">
+        
+        <label>Away Team Rating</label>
+        <input type="number" id="pB" placeholder="e.g. 45.0">
+        
+        <label>Match Conditions</label>
+        <select id="weather">
+            <option value="1.0">Dry Track (Fast Play)</option>
+            <option value="0.85">Slippery (Ball Handling %)</option>
+            <option value="0.70">Heavy Rain (Grind)</option>
+        </select>
+
+        <button onclick="generateBookieForecast()">Run Bookie Forecast</button>
+
+        <div id="display" class="result-panel" style="display:none;">
+            <div class="market-row">
+                <span class="market-label">Final Score</span>
+                <span class="market-value highlight" id="ft-score"></span>
+            </div>
+            <div class="market-row">
+                <span class="market-label">HT/FT Double</span>
+                <span class="market-value" id="ht-ft"></span>
+            </div>
+            <div class="market-row">
+                <span class="market-label">HT Margin Range</span>
+                <span class="market-value" id="ht-margin"></span>
+            </div>
+            <div class="market-row">
+                <span class="market-label">FT Margin (Bookie)</span>
+                <span class="market-value highlight" id="ft-margin"></span>
+            </div>
+            <div class="market-row">
+                <span class="market-label">Total Tries</span>
+                <span class="market-value" id="tries"></span>
+            </div>
+            <div class="market-row">
+                <span class="market-label">2nd Half Dominance</span>
+                <span class="market-value" id="second-half"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function generateBookieForecast() {
+    let pA = parseFloat(document.getElementById('pA').value);
+    let pB = parseFloat(document.getElementById('pB').value);
+    const w = parseFloat(document.getElementById('weather').value);
+
+    // Auto-correction for the "885" bug
+    if (pA > 150) pA = pA / 10;
+    if (pB > 150) pB = pB / 10;
+
+    // Logic for Home Advantage (+8)
+    const homeFT = Math.round((pA * 0.4) + 8);
+    const awayFT = Math.round(pB * 0.4);
+    const totalPoints = (homeFT + awayFT) * w;
+    const margin = Math.abs(homeFT - awayFT);
+    const winner = homeFT >= awayFT ? "Home" : "Away";
+
+    // Half Time Estimates
+    const homeHT = Math.round(homeFT * 0.45);
+    const awayHT = Math.round(awayFT * 0.45);
+    const htWinner = homeHT > awayHT ? "Home" : "Away";
+
+    // Display Results
+    document.getElementById('display').style.display = 'block';
+    document.getElementById('ft-score').innerText = `${homeFT} - ${awayFT}`;
+    document.getElementById('ht-ft').innerText = `${htWinner} / ${winner}`;
+    
+    // HT Margin Logic
+    const htm = Math.abs(homeHT - awayHT);
+    document.getElementById('ht-margin').innerText = htm <= 4 ? "1-4 pts" : (htm <= 8 ? "5-8 pts" : "9+ pts");
+
+    // FT Margin Logic
+    document.getElementById('ft-margin').innerText = `${winner} ${margin <= 12 ? '1-12' : '13+'}`;
+
+    // Total Tries (Bookie average: 7.5 pts per try cycle)
+    document.getElementById('tries').innerText = Math.round(totalPoints / 7.5) + " Tries";
+
+    // 2nd Half Logic
+    document.getElementById('second-half').innerText = winner + " to Win 2nd Half";
+}
+</script>
+
+</body>
+</html>
