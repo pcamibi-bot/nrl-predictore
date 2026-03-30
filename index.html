@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NRL Predictor v1.6</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f4f4; padding: 20px; text-align: center; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        input, select, button { width: 90%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ccc; }
+        button { background-color: #007bff; color: white; font-weight: bold; cursor: pointer; border: none; }
+        #result { margin-top: 20px; padding: 15px; border-radius: 8px; font-weight: bold; }
+        .win-12 { background-color: #e3f2fd; color: #0d47a1; } /* Little Win */
+        .win-13 { background-color: #fff3e0; color: #e65100; } /* Big Win */
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>NRL Predictor v1.6</h2>
+    
+    <input type="number" id="pA" placeholder="Home Team Power Rating (pA)" step="0.1">
+    <input type="number" id="pB" placeholder="Away Team Power Rating (pB)" step="0.1">
+    
+    <select id="weather">
+        <option value="1.0">Fine (Dry Track)</option>
+        <option value="0.85">Moderate Rain (Slippery)</option>
+        <option value="0.7">Heavy Rain (Low Score)</option>
+    </select>
+
+    <button onclick="calculatePrediction()">Run Forecast</button>
+
+    <div id="result"></div>
+</div>
+
+<script>
+function calculatePrediction() {
+    const pA = parseFloat(document.getElementById('pA').value);
+    const pB = parseFloat(document.getElementById('pB').value);
+    const w = parseFloat(document.getElementById('weather').value);
+    const display = document.getElementById('result');
+
+    if (isNaN(pA) || isNaN(pB)) {
+        display.innerHTML = "Please enter both Power Ratings.";
+        return;
+    }
+
+    // v1.6 Logic: Home Advantage +8 (R4 Audit)
+    const homeScore = Math.round((pA * 0.4) + 8);
+    const awayScore = Math.round(pB * 0.4);
+    
+    // Apply weather weight to the difference
+    const rawMargin = (homeScore - awayScore) * w;
+    const finalMargin = Math.abs(Math.round(rawMargin));
+    
+    let winner = homeScore >= awayScore ? "HOME TEAM" : "AWAY TEAM";
+    let category = "";
+    let cssClass = "";
+
+    // Bookie Margin Logic
+    if (finalMargin <= 12.5) {
+        category = "1-12 LITTLE WIN";
+        cssClass = "win-12";
+    } else {
+        category = "13+ BIG WIN";
+        cssClass = "win-13";
+    }
+
+    display.className = cssClass;
+    display.innerHTML = `
+        PROJECTION: ${winner}<br>
+        SCORE: ${homeScore} - ${awayScore}<br>
+        MARGIN: ${finalMargin} pts<br>
+        <strong>BETTING: ${category}</strong>
+    `;
+}
+</script>
+
+</body>
+</html>
