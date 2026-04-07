@@ -1,0 +1,15 @@
+# v1.8 Weighting Update
+def calculate_v1_8_prediction(home_team, away_team):
+    # New variable: Defensive Fatigue (Based on missed tackles from R4 & R5)
+    home_def_leak = get_missed_tackles(home_team, rounds=[4, 5]) 
+    away_def_leak = get_missed_tackles(away_team, rounds=[4, 5])
+    
+    # New variable: Star Power (The 'Human Factor')
+    home_star_power = 4.5 if has_top_5_player(home_team) else 0
+    away_star_power = 4.5 if has_top_5_player(away_team) else 0
+
+    # Calculate Score
+    home_final = (home_rating * 0.6) - (home_def_leak * 0.2) + home_star_power + home_ground_adv
+    away_final = (away_rating * 0.6) - (away_def_leak * 0.2) + away_star_power
+    
+    return round(home_final), round(away_final)
