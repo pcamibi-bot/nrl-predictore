@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NRL Predictor v1.8</title>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; }
+        .match-card { background: #333; margin: 10px 0; padding: 15px; border-radius: 8px; border-left: 5px solid #00ff00; }
+        h2 { color: #00ff00; }
+    </style>
+</head>
+<body>
+    <h2>NRL Predictor v1.8: Round 6</h2>
+    <div id="results"></div>
+
+    <script>
+        function runV1_8(homeTeam, awayTeam, hRating, aRating, hRest, aRest, star) {
+            let hScore = (hRating * 0.6) + 9.5; // Includes Home Adv & Star Power
+            let aScore = (aRating * 0.6);
+            if (hRest < 6) hScore -= 3;
+            if (aRest < 6) aScore -= 3;
+            if (star === 'away') { aScore += 4.5; hScore -= 4.5; }
+
+            const card = `<div class="match-card">
+                <strong>${homeTeam} vs ${awayTeam}</strong><br>
+                Forecast: ${Math.round(hScore)} - ${Math.round(aScore)}<br>
+                Winner: ${hScore > aScore ? homeTeam : awayTeam}
+            </div>`;
+            document.getElementById('results').innerHTML += card;
+        }
+
+        // --- ROUND 6 LIVE DATA ---
+        runV1_8("Bulldogs", "Panthers", 69, 190, 6, 6, 'away');
+        runV1_8("Dragons", "Sea Eagles", 55, 74, 6, 8, 'away');
+        runV1_8("Broncos", "Cowboys", 82, 85, 6, 6, 'home');
+        runV1_8("Rabbitohs", "Raiders", 78, 65, 8, 6, 'home');
+        runV1_8("Sharks", "Roosters", 88, 86, 6, 7, 'home');
+        runV1_8("Storm", "Warriors", 84, 80, 8, 6, 'home');
+        runV1_8("Eels", "Titans", 72, 58, 6, 8, 'home');
+        runV1_8("Wests Tigers", "Knights", 75, 73, 6, 7, 'home');
+    </script>
+</body>
+</html>
